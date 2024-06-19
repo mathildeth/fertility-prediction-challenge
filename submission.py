@@ -19,7 +19,16 @@ run.py can be used to test your submission.
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import joblib
-
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
 def clean_df(df, background_df=None):
     """
@@ -34,23 +43,36 @@ def clean_df(df, background_df=None):
     pd.DataFrame: The cleaned dataframe with only the necessary columns and processed variables.
     """
 
-    ## This script contains a bare minimum working example
-    # Create new variable with age
-    df["age"] = 2024 - df["birthyear_bg"]
+    # ## This script contains a bare minimum working example
+    # # Create new variable with age
+    # df["age"] = 2024 - df["birthyear_bg"]
 
-    # Imputing missing values in age with the mean
-    df["age"] = df["age"].fillna(df["age"].mean())
+    # # Imputing missing values in age with the mean
+    # df["age"] = df["age"].fillna(df["age"].mean())
 
-    # Selecting variables for modelling
-    keepcols = [
-        "nomem_encr",  # ID variable required for predictions,
-        "age"          # newly created variable
-    ] 
+    # # Selecting variables for modelling
+    # keepcols = [
+    #     "nomem_encr",  # ID variable required for predictions,
+    #     "age"          # newly created variable
+    # ] 
 
-    # Keeping data with variables selected
-    df = df[keepcols]
+    # # Keeping data with variables selected
+    # df = df[keepcols]
+    # drop data which does not have an outcome variable, for both datasets
+    y_missing = df_train_set['outcome_available'] == 0
+    df_train_set = df_train_set.drop(df_train_set[y_missing].index, axis='rows')
+    df_outcome_set = df_train_outcome.drop(df_train_outcome[y_missing].index, axis='rows')
+    
+    # impute data by replacing NaNs for mean value
+    imputer = SimpleImputer(strategy='mean')
+    df_train_set = imputer.fit_transform(df_train_set)
+    
+    
+    scaler = StandardScaler()
+    scaler.fit(df_train_set)
+    df_train_set = scaler.transform(df_train_set)
 
-    return df
+    return df_train_set
 
 
 def predict_outcomes(df, background_df=None, model_path="model.joblib"):
